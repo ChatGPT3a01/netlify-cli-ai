@@ -698,12 +698,12 @@ def init_site():
             'stdout': result['stdout']
         })
 
-    # 創建新站點（需要指定 account-slug 來避免交互式選擇）
+    # 創建新站點
     if site_name:
-        result = deployer.run_command(['netlify', 'sites:create', '--name', site_name, '--account-slug', 'chatgpt3a01'])
+        result = deployer.run_command(['netlify', 'sites:create', '--name', site_name])
     else:
         # 使用隨機名稱創建
-        result = deployer.run_command(['netlify', 'sites:create', '--account-slug', 'chatgpt3a01'])
+        result = deployer.run_command(['netlify', 'sites:create'])
 
     # 檢查是否真的創建成功（忽略 Node.js 警告）
     all_output = result['stdout'] + result['stderr']
