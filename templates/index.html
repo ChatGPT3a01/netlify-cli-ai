@@ -1540,8 +1540,14 @@
         // === 登錄 Netlify ===
         async function loginNetlify() {
             termLog('$ netlify login', 'cmd');
-            termLog('正在開啟 Netlify 登錄頁面...', 'muted');
-            setStatus('登錄中...');
+            termLog('正在開啟 Netlify 授權頁面...', 'muted');
+            termLog('⚠️ 請在瀏覽器中點擊「Authorize」按鈕完成授權！', 'warn');
+            termLog('📋 授權步驟：1. 瀏覽器會開啟 Netlify 授權頁面', 'muted');
+            termLog('           2. 點擊綠色「Authorize」按鈕', 'muted');
+            termLog('           3. 等待此處顯示「登錄成功」', 'muted');
+            setStatus('等待授權中...');
+
+            addChat('ai', '🔐 **正在進行 Netlify 授權...**\n\n請在剛開啟的瀏覽器視窗中：\n1. 如果尚未登入 Netlify，請先登入\n2. 看到「Authorize Application」頁面後\n3. 點擊綠色的「**Authorize**」按鈕\n\n授權完成後這裡會自動顯示結果。');
 
             try {
                 const res = await fetch('/api/login', {
