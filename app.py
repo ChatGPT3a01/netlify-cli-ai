@@ -22,6 +22,7 @@ import time
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+app.config['TEMPLATES_AUTO_RELOAD'] = True  # 關閉模板緩存
 
 # ============================================================================
 # 專案分析器
@@ -602,6 +603,33 @@ def generate_configs():
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/list-teams', methods=['GET'])
+def list_teams():
+    """列出所有團隊"""
+    try:
+        deployer = Deployer('.')
+        result = deployer.run_command(['netlify', 'teams:list', '--json'])
+
+        if result['stdout']:
+            try:
+                teams_data = json.loads(result['stdout'])
+                teams = []
+                for team in teams_data:
+                    teams.append({
+                        'name': team.get('name', 'Unknown'),
+                        'slug': team.get('slug', ''),
+                        'id': team.get('id', '')
+                    })
+                return jsonify({'success': True, 'teams': teams})
+            except json.JSONDecodeError:
+                return jsonify({'success': False, 'error': '解析失敗', 'teams': []})
+
+        return jsonify({'success': False, 'error': '無法取得團隊列表', 'teams': []})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'teams': []})
+
+
 @app.route('/api/list-sites', methods=['GET'])
 def list_sites():
     """列出所有站點"""
@@ -686,6 +714,7 @@ def init_site():
     data = request.json
     project_path = data.get('path')
     site_name = data.get('site_name', '')
+    account_slug = data.get('account_slug', '')  # 團隊 slug
 
     deployer = Deployer(project_path)
 
@@ -698,12 +727,14 @@ def init_site():
             'stdout': result['stdout']
         })
 
-    # 創建新站點
+    # 創建新站點 - 使用 --account-slug 避免互動式提問
+    cmd = ['netlify', 'sites:create']
     if site_name:
-        result = deployer.run_command(['netlify', 'sites:create', '--name', site_name])
-    else:
-        # 使用隨機名稱創建
-        result = deployer.run_command(['netlify', 'sites:create'])
+        cmd.extend(['--name', site_name])
+    if account_slug:
+        cmd.extend(['--account-slug', account_slug])
+
+    result = deployer.run_command(cmd)
 
     # 檢查是否真的創建成功（忽略 Node.js 警告）
     all_output = result['stdout'] + result['stderr']
