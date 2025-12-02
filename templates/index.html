@@ -1813,9 +1813,40 @@
         async function initSite() {
             if (!analysis) { termLog('請先分析專案', 'err'); return; }
 
+            // 先獲取團隊列表
+            termLog('正在獲取團隊列表...', 'muted');
+            setStatus('獲取團隊中...');
+
+            let teams = [];
+            try {
+                const teamsRes = await fetch('/api/list-teams');
+                const teamsData = await teamsRes.json();
+                if (teamsData.success && teamsData.teams.length > 0) {
+                    teams = teamsData.teams;
+                    termLog('找到 ' + teams.length + ' 個團隊', 'ok');
+                }
+            } catch (e) {
+                termLog('無法獲取團隊列表: ' + e.message, 'warn');
+            }
+
+            // 讓用戶選擇團隊
+            let accountSlug = '';
+            if (teams.length > 1) {
+                const teamList = teams.map((t, i) => `${i + 1}. ${t.name} (${t.slug})`).join('\n');
+                const choice = prompt(`請選擇團隊（輸入數字）：\n\n${teamList}\n\n輸入 1-${teams.length}：`);
+                const idx = parseInt(choice) - 1;
+                if (idx >= 0 && idx < teams.length) {
+                    accountSlug = teams[idx].slug;
+                    termLog('選擇團隊: ' + teams[idx].name, 'ok');
+                }
+            } else if (teams.length === 1) {
+                accountSlug = teams[0].slug;
+                termLog('使用團隊: ' + teams[0].name, 'ok');
+            }
+
             const siteName = prompt('請輸入站點名稱（留空則自動生成）：\n\n例如：my-awesome-site\n將會建立 my-awesome-site.netlify.app');
 
-            termLog('$ netlify sites:create', 'cmd');
+            termLog('$ netlify sites:create' + (siteName ? ' --name ' + siteName : '') + (accountSlug ? ' --account-slug ' + accountSlug : ''), 'cmd');
             termLog('初始化站點中...', 'muted');
             setStatus('初始化中...');
 
@@ -1825,7 +1856,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         path: analysis.path,
-                        site_name: siteName || ''
+                        site_name: siteName || '',
+                        account_slug: accountSlug
                     })
                 });
                 const data = await res.json();
