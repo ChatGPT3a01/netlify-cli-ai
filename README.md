@@ -154,11 +154,12 @@
 # ║  Step 1️⃣  下載專案                                         ║
 # ╚════════════════════════════════════════════════════════════╝
 
-# 下載專案
-git clone https://github.com/ChatGPT3a01/netlify-cli-ai.git
-
-# 進入專案資料夾
+# 建立並進入專案資料夾
+mkdir netlify-cli-ai
 cd netlify-cli-ai
+
+# 下載專案到當前資料夾
+git clone https://github.com/ChatGPT3a01/netlify-cli-ai.git .
 
 # ╔════════════════════════════════════════════════════════════╗
 # ║  Step 2️⃣  安裝 Python 依賴                                 ║
