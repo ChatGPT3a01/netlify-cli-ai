@@ -1,0 +1,27 @@
+# 環境變數（含敏感資訊）
+.env
+.env.local
+.env.production
+
+# Netlify 本地快取
+.netlify/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Node.js
+node_modules/
+
+# 系統檔案
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code 本地設定
+.claude/

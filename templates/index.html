@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netlify AI Deploy Studio</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #181825;
+            --bg-tertiary: #11111b;
+            --bg-hover: #313244;
+            --border-color: #313244;
+            --text-primary: #cdd6f4;
+            --text-secondary: #a6adc8;
+            --text-muted: #6c7086;
+            --accent-primary: #89b4fa;
+            --accent-secondary: #a6e3a1;
+            --accent-warning: #f9e2af;
+            --accent-error: #f38ba8;
+            --accent-gradient: linear-gradient(135deg, #89b4fa, #a6e3a1);
+        }
+
+        [data-theme="purple"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f0f1a;
+            --bg-hover: #2d2d5a;
+            --border-color: #2d2d5a;
+            --accent-primary: #a855f7;
+            --accent-secondary: #06b6d4;
+            --accent-gradient: linear-gradient(135deg, #a855f7, #06b6d4);
+        }
+
+        [data-theme="hacker"] {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #0d1117;
+            --bg-tertiary: #000000;
+            --bg-hover: #1a1a1a;
+            --border-color: #30363d;
+            --text-primary: #00ff00;
+            --text-secondary: #00cc00;
+            --text-muted: #006600;
+            --accent-primary: #00ff00;
+            --accent-secondary: #00ffff;
+            --accent-gradient: linear-gradient(135deg, #00ff00, #00ffff);
+        }
+
+        [data-theme="sunset"] {
+            --bg-primary: #1f1315;
+            --bg-secondary: #170f10;
+            --bg-tertiary: #0f0a0b;
+            --bg-hover: #3d2427;
+            --border-color: #3d2427;
+            --accent-primary: #ff6b6b;
+            --accent-secondary: #feca57;
+            --accent-gradient: linear-gradient(135deg, #ff6b6b, #feca57);
+        }
+
+        [data-theme="ocean"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #0c1222;
+            --bg-tertiary: #070b14;
+            --bg-hover: #1e293b;
+            --border-color: #1e293b;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #34d399;
+            --accent-gradient: linear-gradient(135deg, #38bdf8, #34d399);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e8e8e8;
+            --bg-hover: #e0e0e0;
+            --border-color: #d0d0d0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --text-muted: #8a8a8a;
+            --accent-primary: #2563eb;
+            --accent-secondary: #16a34a;
+            --accent-gradient: linear-gradient(135deg, #2563eb, #16a34a);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .ide-container {
+            display: grid;
+            grid-template-rows: 40px 1fr 180px 24px;
+            grid-template-columns: 240px 1fr 280px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        /* ===== 標題欄 ===== */
+        .titlebar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            user-select: none;
+        }
+
+        .titlebar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .titlebar-logo {
+            font-size: 13px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .titlebar-menu {
+            display: flex;
+            gap: 2px;
+        }
+
+        .titlebar-menu button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .titlebar-menu button:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 6px;
+        }
+
+        .theme-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .theme-dot:hover { transform: scale(1.2); }
+        .theme-dot.active { border-color: var(--text-primary); }
+
+        .theme-dot[data-theme="default"] { background: linear-gradient(135deg, #89b4fa, #a6e3a1); }
+        .theme-dot[data-theme="purple"] { background: linear-gradient(135deg, #a855f7, #06b6d4); }
+        .theme-dot[data-theme="hacker"] { background: linear-gradient(135deg, #00ff00, #00ffff); }
+        .theme-dot[data-theme="sunset"] { background: linear-gradient(135deg, #ff6b6b, #feca57); }
+        .theme-dot[data-theme="ocean"] { background: linear-gradient(135deg, #38bdf8, #34d399); }
+        .theme-dot[data-theme="light"] { background: linear-gradient(135deg, #fff, #ddd); border: 1px solid #ccc; }
+
+        /* ===== 側邊欄 ===== */
+        .sidebar {
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .project-selector {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .project-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .project-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .project-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .project-btn-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            flex: 1;
+            padding: 8px 10px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 6px;
+            color: var(--bg-primary);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .btn-icon:hover { opacity: 0.9; }
+
+        .sidebar-header {
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sidebar-header button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .sidebar-header button:hover { color: var(--text-primary); }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+
+        .file-tree::-webkit-scrollbar { width: 6px; }
+        .file-tree::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tree-item:hover { background: var(--bg-hover); }
+        .tree-item.active { background: var(--bg-hover); color: var(--text-primary); }
+        .tree-item .icon { margin-right: 6px; font-size: 14px; }
+        .tree-item.indent-1 { padding-left: 24px; }
+        .tree-item.indent-2 { padding-left: 36px; }
+        .tree-item.indent-3 { padding-left: 48px; }
+
+        /* ===== 主編輯區 ===== */
+        .main-area {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tabs-bar {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tabs-bar::-webkit-scrollbar { height: 0; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-right: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .tab:hover { color: var(--text-secondary); }
+        .tab.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .tab-close {
+            opacity: 0;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .tab:hover .tab-close { opacity: 1; }
+
+        .editor-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .welcome-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-logo { font-size: 56px; margin-bottom: 16px; }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        /* 快速指南 */
+        .quick-guide {
+            width: 100%;
+            max-width: 700px;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .quick-guide h3 {
+            font-size: 14px;
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .guide-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .guide-step {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .guide-step:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            margin: 0 auto 10px;
+        }
+
+        .step-content strong {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* 我的站點 */
+        .my-sites {
+            width: 100%;
+            max-width: 700px;
+            text-align: left;
+        }
+
+        .my-sites h3 {
+            font-size: 14px;
+            color: var(--accent-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .refresh-btn {
+            background: var(--bg-hover);
+            border: none;
+            color: var(--text-muted);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .sites-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .site-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .site-card:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        .site-card .site-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .site-card .site-url {
+            font-size: 11px;
+            color: var(--accent-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .site-card .site-updated {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(137, 180, 250, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover { background: var(--bg-tertiary); }
+
+        .btn-success {
+            background: var(--accent-secondary);
+            color: var(--bg-primary);
+        }
+
+        .editor-content {
+            height: 100%;
+            overflow: auto;
+            display: none;
+        }
+
+        .editor-content.active { display: block; }
+
+        .code-view {
+            display: flex;
+            height: 100%;
+        }
+
+        .line-numbers {
+            min-width: 45px;
+            padding: 12px 8px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            text-align: right;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .code-content {
+            flex: 1;
+            padding: 12px 16px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow: auto;
+        }
+
+        /* ===== 右側面板 ===== */
+        .right-panel {
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .panel-tab:hover { color: var(--text-secondary); }
+
+        .panel-tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+        }
+
+        .panel-content.active { display: flex; }
+
+        /* AI 聊天 */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-message.user { text-align: right; }
+
+        .chat-message.user .msg-content {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 12px 12px 4px 12px;
+            max-width: 90%;
+            text-align: left;
+        }
+
+        .chat-message.ai .msg-content {
+            background: var(--bg-hover);
+            padding: 10px 12px;
+            border-radius: 12px 12px 12px 4px;
+        }
+
+        .msg-content {
+            font-size: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .msg-content pre {
+            background: var(--bg-tertiary);
+            padding: 8px;
+            border-radius: 4px;
+            margin: 6px 0;
+            overflow-x: auto;
+            font-size: 11px;
+        }
+
+        .msg-content code {
+            background: var(--bg-tertiary);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .chat-input-area {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 12px;
+            resize: none;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .chat-send {
+            padding: 8px 14px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 16px;
+            color: var(--bg-primary);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 設定面板 */
+        .settings-panel {
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .settings-panel h3 {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .settings-panel p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .api-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .api-option:hover { background: var(--bg-hover); }
+        .api-option.selected { border-color: var(--accent-primary); }
+        .api-option input { accent-color: var(--accent-primary); }
+
+        .api-option-info { font-size: 12px; }
+        .api-option-info small { color: var(--text-muted); font-size: 10px; }
+
+        .api-key-input {
+            margin-top: 12px;
+        }
+
+        .api-key-input label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .api-key-input input {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .api-key-input input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .api-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-status.ok { background: rgba(166, 227, 161, 0.15); color: var(--accent-secondary); }
+        .api-status.no { background: rgba(243, 139, 168, 0.15); color: var(--accent-error); }
+
+        /* 專案資訊 */
+        .info-panel {
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 16px;
+        }
+
+        .info-section h4 {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .info-card {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .info-row .label { color: var(--text-muted); }
+        .info-row .value { font-weight: 500; }
+        .info-row .value.ok { color: var(--accent-secondary); }
+        .info-row .value.warn { color: var(--accent-warning); }
+        .info-row .value.err { color: var(--accent-error); }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 500;
+            margin: 2px;
+        }
+
+        .tag.ok { background: rgba(166, 227, 161, 0.2); color: var(--accent-secondary); }
+        .tag.warn { background: rgba(249, 226, 175, 0.2); color: var(--accent-warning); }
+        .tag.err { background: rgba(243, 139, 168, 0.2); color: var(--accent-error); }
+        .tag.info { background: rgba(137, 180, 250, 0.2); color: var(--accent-primary); }
+
+        .deploy-btns {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .deploy-btns .btn {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        /* ===== 終端機 ===== */
+        .terminal-area {
+            grid-column: 1 / -1;
+            background: var(--bg-tertiary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .terminal-tab {
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .terminal-tab:hover { color: var(--text-secondary); }
+        .terminal-tab.active { background: var(--bg-tertiary); color: var(--text-primary); }
+
+        .terminal-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+        }
+
+        .terminal-actions button:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .terminal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .terminal-content::-webkit-scrollbar { width: 6px; }
+        .terminal-content::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
+
+        .term-line { margin-bottom: 2px; }
+        .term-line.cmd { color: var(--accent-primary); }
+        .term-line.ok { color: var(--accent-secondary); }
+        .term-line.err { color: var(--accent-error); }
+        .term-line.warn { color: var(--accent-warning); }
+        .term-line.muted { color: var(--text-muted); }
+
+        /* ===== 狀態列 ===== */
+        .statusbar {
+            grid-column: 1 / -1;
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: 11px;
+        }
+
+        .statusbar-left, .statusbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .status-dot.green { background: #00ff00; }
+        .status-dot.yellow { background: #ffff00; }
+        .status-dot.red { background: #ff4444; }
+
+        .hidden { display: none !important; }
+
+        /* ===== 彈出視窗 ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .modal-body h3 {
+            font-size: 14px;
+            color: var(--accent-primary);
+            margin: 16px 0 8px 0;
+        }
+
+        .modal-body h3:first-child {
+            margin-top: 0;
+        }
+
+        .modal-body p, .modal-body li {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .modal-body ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .modal-body li {
+            margin-bottom: 6px;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .developer-info {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .developer-info h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .developer-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--bg-hover);
+            border-radius: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .social-links a:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .loading {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--bg-hover);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="ide-container">
+        <!-- 標題欄 -->
+        <div class="titlebar">
+            <div class="titlebar-left">
+                <span class="titlebar-logo">Netlify AI Deploy Studio</span>
+                <div class="titlebar-menu">
+                    <button onclick="showWelcome()">首頁</button>
+                    <button onclick="analyzeProject()">分析</button>
+                    <button onclick="generateConfigs()">生成配置</button>
+                    <button onclick="switchPanel('info')">部署</button>
+                </div>
+            </div>
+            <div class="theme-selector">
+                <div class="theme-dot active" data-theme="default" title="深藍" onclick="setTheme('default')"></div>
+                <div class="theme-dot" data-theme="purple" title="深紫" onclick="setTheme('purple')"></div>
+                <div class="theme-dot" data-theme="hacker" title="駭客綠" onclick="setTheme('hacker')"></div>
+                <div class="theme-dot" data-theme="sunset" title="日落橙" onclick="setTheme('sunset')"></div>
+                <div class="theme-dot" data-theme="ocean" title="海洋藍" onclick="setTheme('ocean')"></div>
+                <div class="theme-dot" data-theme="light" title="淺色" onclick="setTheme('light')"></div>
+            </div>
+        </div>
+
+        <!-- 左側邊欄 -->
+        <div class="sidebar">
+            <div class="project-selector">
+                <div class="project-input-group">
+                    <input type="text" class="project-input" id="projectPath" placeholder="輸入完整路徑，如 D:\my-project" value=".">
+                    <div class="project-btn-row">
+                        <button class="btn-icon" onclick="browseFolder()" title="瀏覽資料夾">📁 瀏覽</button>
+                        <button class="btn-icon" onclick="analyzeProject()" title="開啟專案">📂 開啟</button>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-header">
+                <span>檔案總管</span>
+                <button onclick="analyzeProject()">↻</button>
+            </div>
+            <div class="file-tree" id="fileTree">
+                <div class="tree-item" style="padding: 20px; text-align: center; color: var(--text-muted);">
+                    請選擇專案資料夾
+                </div>
+            </div>
+        </div>
+
+        <!-- 主編輯區 -->
+        <div class="main-area">
+            <div class="tabs-bar" id="tabsBar">
+                <div class="tab active" data-tab="welcome">歡迎</div>
+            </div>
+            <div class="editor-container">
+                <div class="welcome-page" id="welcomePage">
+                    <div class="welcome-logo">🚀</div>
+                    <h1 class="welcome-title">Netlify AI Deploy Studio</h1>
+                    <p class="welcome-subtitle">智慧部署助手 - 曾慶良(阿亮老師)建置</p>
+
+                    <div class="welcome-actions">
+                        <button class="btn btn-primary" onclick="loginNetlify()">
+                            🔐 登錄 Netlify
+                        </button>
+                        <button class="btn btn-secondary" onclick="openSettingsPanel()">
+                            🔑 設定 API Key
+                        </button>
+                        <button class="btn btn-secondary" onclick="showTutorial()">
+                            📖 使用教學
+                        </button>
+                        <button class="btn btn-secondary" onclick="showInstallGuide()">
+                            💿 安裝教學
+                        </button>
+                    </div>
+
+                    <!-- 快速指南 -->
+                    <div class="quick-guide">
+                        <h3>📋 快速部署指南</h3>
+                        <div class="guide-steps">
+                            <div class="guide-step">
+                                <div class="step-num">1</div>
+                                <div class="step-content">
+                                    <strong>開啟專案</strong>
+                                    <p>點擊左上角「瀏覽」選擇專案資料夾</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <div class="step-num">2</div>
+                                <div class="step-content">
+                                    <strong>生成配置</strong>
+                                    <p>自動建立 netlify.toml 部署設定檔</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <div class="step-num">3</div>
+                                <div class="step-content">
+                                    <strong>初始化站點</strong>
+                                    <p>建立 Netlify 站點並設定域名</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <div class="step-num">4</div>
+                                <div class="step-content">
+                                    <strong>一鍵部署</strong>
+                                    <p>預覽或正式上線你的網站</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 我的站點 -->
+                    <div class="my-sites">
+                        <h3>🌐 我的站點 <button class="refresh-btn" onclick="loadMySites()">↻</button></h3>
+                        <div class="sites-list" id="sitesList">
+                            <p style="color: var(--text-muted); font-size: 12px;">點擊上方「↻」載入站點列表</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-content" id="editorContent">
+                    <div class="code-view">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                        <pre class="code-content" id="codeContent"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側面板 -->
+        <div class="right-panel">
+            <div class="panel-tabs">
+                <div class="panel-tab active" data-panel="ai" onclick="switchPanel('ai')">🤖 AI</div>
+                <div class="panel-tab" data-panel="info" onclick="switchPanel('info')">📊 資訊</div>
+                <div class="panel-tab" data-panel="settings" onclick="switchPanel('settings')">⚙️ 設定</div>
+            </div>
+
+            <!-- AI 聊天 -->
+            <div class="panel-content active" id="panelAi">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message ai">
+                        <div class="msg-content">
+                            👋 你好！我是 AI 部署助手。<br><br>
+                            我可以幫你：<br>
+                            • 分析部署錯誤<br>
+                            • 優化程式碼<br>
+                            • 解答問題<br><br>
+                            請先在「設定」中輸入 API Key。
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <textarea class="chat-input" id="chatInput" placeholder="輸入訊息..." rows="1" onkeydown="handleChatKey(event)"></textarea>
+                        <button class="chat-send" id="chatSend" onclick="sendChat()">送出</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 專案資訊 -->
+            <div class="panel-content" id="panelInfo">
+                <div class="info-panel">
+                    <div class="info-section">
+                        <h4>專案狀態</h4>
+                        <div class="info-card">
+                            <div class="info-row">
+                                <span class="label">類型</span>
+                                <span class="value" id="infoType">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">檔案數</span>
+                                <span class="value" id="infoFiles">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">路徑</span>
+                                <span class="value" id="infoPath" style="font-size: 10px; word-break: break-all;">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>偵測結果</h4>
+                        <div id="infoDetected"><span class="tag info">尚未分析</span></div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>現有配置</h4>
+                        <div id="infoConfigs"><span class="tag info">尚未分析</span></div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>環境變數</h4>
+                        <div id="infoEnvVars"><span class="tag info">尚未分析</span></div>
+                    </div>
+                </div>
+
+                <div class="deploy-btns">
+                    <button class="btn btn-secondary" onclick="generateConfigs()">📝 生成配置</button>
+                    <button class="btn btn-secondary" onclick="initSite()">🔗 初始化站點</button>
+                    <button class="btn btn-secondary" onclick="updateDomain()">🌐 修改域名</button>
+                    <button class="btn btn-primary" onclick="deployPreview()">👁️ 預覽部署</button>
+                    <button class="btn btn-success" onclick="deployProd()">🚀 正式部署</button>
+                </div>
+            </div>
+
+            <!-- 設定 -->
+            <div class="panel-content" id="panelSettings">
+                <div class="settings-panel">
+                    <h3>🔑 AI API 設定</h3>
+                    <p>選擇 AI 服務並輸入你的 API Key。<br>金鑰僅存在本機，不會上傳。</p>
+
+                    <div class="api-option selected" onclick="selectProvider('openai')">
+                        <input type="radio" name="provider" value="openai" checked>
+                        <div class="api-option-info">
+                            <div>OpenAI</div>
+                        </div>
+                    </div>
+
+                    <div class="api-option" onclick="selectProvider('anthropic')">
+                        <input type="radio" name="provider" value="anthropic">
+                        <div class="api-option-info">
+                            <div>Anthropic</div>
+                        </div>
+                    </div>
+
+                    <div class="api-option" onclick="selectProvider('google')">
+                        <input type="radio" name="provider" value="google">
+                        <div class="api-option-info">
+                            <div>Google</div>
+                        </div>
+                    </div>
+
+                    <div class="api-key-input">
+                        <label>API Key</label>
+                        <input type="password" id="apiKeyInput" placeholder="輸入你的 API Key..." onchange="saveApiKey()">
+                    </div>
+
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="testApi()">測試連線</button>
+
+                    <div class="api-status no" id="apiStatus">
+                        ⚠️ 尚未設定 API Key
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 終端機 -->
+        <div class="terminal-area">
+            <div class="terminal-header">
+                <div class="terminal-tabs">
+                    <div class="terminal-tab active">終端機</div>
+                </div>
+                <div class="terminal-actions">
+                    <button onclick="clearTerm()">清除</button>
+                </div>
+            </div>
+            <div class="terminal-content" id="terminalContent">
+                <div class="term-line muted">Netlify AI Deploy Studio v2.0</div>
+                <div class="term-line muted">曾慶良(阿亮老師)建置</div>
+                <div class="term-line muted">=====================================</div>
+                <div class="term-line">準備就緒。請選擇專案資料夾開始。</div>
+            </div>
+        </div>
+
+        <!-- 狀態列 -->
+        <div class="statusbar">
+            <div class="statusbar-left">
+                <span class="status-item"><span class="status-dot" id="statusCli"></span> CLI</span>
+                <span class="status-item"><span class="status-dot" id="statusLogin"></span> 登入</span>
+                <span class="status-item"><span class="status-dot" id="statusAi"></span> AI</span>
+            </div>
+            <div class="statusbar-right">
+                <span id="statusMsg">就緒</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用教學彈出視窗 -->
+    <div class="modal-overlay" id="tutorialModal" onclick="closeTutorial(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>📖 使用教學</h2>
+                <button class="modal-close" onclick="closeTutorial()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>🚀 快速開始</h3>
+                <ul>
+                    <li><strong>步驟 1：</strong>在左上角輸入你的專案完整路徑（例如：D:\Projects\my-website）</li>
+                    <li><strong>步驟 2：</strong>點擊「開啟」按鈕分析專案</li>
+                    <li><strong>步驟 3：</strong>查看右側「資訊」面板確認專案狀態</li>
+                    <li><strong>步驟 4：</strong>點擊「生成配置」自動建立 netlify.toml 等檔案</li>
+                    <li><strong>步驟 5：</strong>點擊「預覽部署」或「正式部署」上線你的網站</li>
+                </ul>
+
+                <h3>🤖 AI 助手功能</h3>
+                <ul>
+                    <li>在右側「設定」面板選擇 AI 服務（OpenAI / Anthropic / Google）</li>
+                    <li>輸入你自己的 API Key（金鑰只存在你的電腦，不會上傳）</li>
+                    <li>切換到「AI」面板，即可與 AI 對話</li>
+                    <li>AI 可以幫你分析部署錯誤、優化程式碼、解答問題</li>
+                </ul>
+
+                <h3>🎨 主題切換</h3>
+                <p>點擊右上角的彩色圓點可切換介面主題，共有 6 種風格可選擇。</p>
+
+                <h3>📁 檔案瀏覽</h3>
+                <ul>
+                    <li>分析專案後，左側會顯示檔案總管</li>
+                    <li>點擊檔案可在中央區域預覽內容</li>
+                    <li>支援多個檔案同時開啟（分頁顯示）</li>
+                </ul>
+
+                <h3>⚠️ 注意事項</h3>
+                <ul>
+                    <li>請先安裝 Netlify CLI：<code>npm install -g netlify-cli</code></li>
+                    <li>首次使用需登入 Netlify：<code>netlify login</code></li>
+                    <li>API Key 僅存在本機瀏覽器，關閉後需重新輸入</li>
+                </ul>
+
+                <div class="developer-info">
+                    <h4>👨‍💻 開發者資訊</h4>
+                    <p>曾慶良（阿亮老師）</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/iddmail" target="_blank">
+                            📘 Facebook
+                        </a>
+                        <a href="https://www.youtube.com/@Liang-yt02" target="_blank">
+                            📺 YouTube
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 安裝教學彈出視窗 -->
+    <div class="modal-overlay" id="installModal" onclick="closeInstallGuide(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>💿 安裝教學</h2>
+                <button class="modal-close" onclick="closeInstallGuide()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>📋 系統需求</h3>
+                <ul>
+                    <li><strong>Node.js</strong> - 版本 18 以上（用於執行 Netlify CLI）</li>
+                    <li><strong>Python</strong> - 版本 3.8 以上（用於執行本應用程式）</li>
+                    <li><strong>瀏覽器</strong> - Chrome / Edge / Firefox 等現代瀏覽器</li>
+                </ul>
+
+                <h3>🔧 步驟一：安裝 Node.js</h3>
+                <ul>
+                    <li>前往 <a href="https://nodejs.org/" target="_blank">https://nodejs.org/</a></li>
+                    <li>下載 LTS 版本（長期支援版）</li>
+                    <li>執行安裝程式，一路按「下一步」完成安裝</li>
+                    <li>開啟命令提示字元，輸入 <code>node --version</code> 確認安裝成功</li>
+                </ul>
+
+                <h3>🌐 步驟二：安裝 Netlify CLI</h3>
+                <ul>
+                    <li>開啟命令提示字元（以系統管理員身份執行）</li>
+                    <li>輸入以下指令：</li>
+                </ul>
+                <pre style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; margin: 10px 0;">npm install -g netlify-cli</pre>
+                <ul>
+                    <li>等待安裝完成，輸入 <code>netlify --version</code> 確認安裝成功</li>
+                </ul>
+
+                <h3>🐍 步驟三：安裝 Python 依賴</h3>
+                <ul>
+                    <li>開啟命令提示字元</li>
+                    <li>切換到專案資料夾：<code>cd D:\Netlify CLI AI</code></li>
+                    <li>輸入以下指令安裝依賴套件：</li>
+                </ul>
+                <pre style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; margin: 10px 0;">pip install -r requirements.txt</pre>
+
+                <h3>🚀 步驟四：啟動應用程式</h3>
+                <ul>
+                    <li><strong>方法一：</strong>直接雙擊 <code>run_gui.bat</code> 檔案</li>
+                    <li><strong>方法二：</strong>在命令提示字元輸入：</li>
+                </ul>
+                <pre style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; margin: 10px 0;">python app.py</pre>
+                <ul>
+                    <li>應用程式會自動開啟瀏覽器，網址為 <code>http://127.0.0.1:5886</code></li>
+                </ul>
+
+                <h3>🔐 步驟五：登錄 Netlify</h3>
+                <ul>
+                    <li>點擊首頁的「🔐 登錄 Netlify」按鈕</li>
+                    <li>瀏覽器會開啟 Netlify 授權頁面</li>
+                    <li>登入你的 Netlify 帳號並授權</li>
+                    <li>授權完成後，狀態列的「登入」指示燈會變成綠色</li>
+                </ul>
+
+                <h3>✅ 安裝完成！</h3>
+                <p>現在你可以開始使用 Netlify AI Deploy Studio 來部署你的網站了！</p>
+
+                <div class="developer-info">
+                    <h4>❓ 遇到問題？</h4>
+                    <p>如果安裝過程中遇到問題，歡迎聯繫阿亮老師</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/iddmail" target="_blank">
+                            📘 Facebook
+                        </a>
+                        <a href="https://www.youtube.com/@Liang-yt02" target="_blank">
+                            📺 YouTube
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analysis = null;
+        let currentFile = null;
+        let provider = 'openai';
+        let apiKey = '';
+
+        // === 主題 ===
+        function setTheme(t) {
+            if (t === 'default') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', t);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+            localStorage.setItem('theme', t);
+        }
+
+        // === 面板切換 ===
+        function switchPanel(p) {
+            document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === p));
+            document.querySelectorAll('.panel-content').forEach(c => c.classList.toggle('active', c.id === 'panel' + p.charAt(0).toUpperCase() + p.slice(1)));
+        }
+
+        // === 開啟設定面板 ===
+        function openSettingsPanel() {
+            switchPanel('settings');
+            // 聚焦到 API Key 輸入框
+            setTimeout(() => {
+                document.getElementById('apiKeyInput').focus();
+            }, 100);
+        }
+
+        // === 登錄 Netlify ===
+        async function loginNetlify() {
+            termLog('$ netlify login', 'cmd');
+            termLog('正在開啟 Netlify 登錄頁面...', 'muted');
+            setStatus('登錄中...');
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    termLog('登錄成功！', 'ok');
+                    if (data.stdout) {
+                        data.stdout.split('\n').forEach(l => l.trim() && termLog(l, 'ok'));
+                    }
+                    addChat('ai', '🎉 Netlify 登錄成功！現在可以開始部署了。');
+                    checkCli(); // 更新狀態列
+                } else {
+                    termLog('登錄失敗或已取消', 'warn');
+                    if (data.stderr) {
+                        data.stderr.split('\n').forEach(l => l.trim() && termLog(l, 'err'));
+                    }
+                    if (data.message) {
+                        termLog(data.message, 'warn');
+                    }
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        // === 專案分析 ===
+        async function analyzeProject() {
+            const path = document.getElementById('projectPath').value.trim();
+            if (!path) { termLog('請輸入專案路徑', 'err'); return; }
+
+            termLog('$ 分析專案: ' + path, 'cmd');
+            setStatus('分析中...');
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    analysis = data.analysis;
+                    showAnalysis(data.analysis);
+                    showFileTree(data.file_tree || []);
+                    termLog('分析完成！', 'ok');
+                    checkCli();
+                    switchPanel('info');
+                } else {
+                    termLog('分析失敗: ' + data.error, 'err');
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        function showAnalysis(a) {
+            document.getElementById('infoType').textContent = a.type_name;
+            document.getElementById('infoFiles').textContent = a.file_count + ' 個';
+            document.getElementById('infoPath').textContent = a.path;
+
+            let det = '';
+            det += `<span class="tag ${a.has_html ? 'ok' : 'err'}">${a.has_html ? '✓' : '✗'} HTML</span>`;
+            det += `<span class="tag ${a.has_python ? 'ok' : 'err'}">${a.has_python ? '✓' : '✗'} Python</span>`;
+            det += `<span class="tag ${a.has_node ? 'ok' : 'err'}">${a.has_node ? '✓' : '✗'} Node.js</span>`;
+            document.getElementById('infoDetected').innerHTML = det;
+
+            let cfg = '';
+            cfg += `<span class="tag ${a.has_netlify_config ? 'ok' : 'warn'}">${a.has_netlify_config ? '✓' : '✗'} netlify.toml</span>`;
+            cfg += `<span class="tag ${a.has_gitignore ? 'ok' : 'warn'}">${a.has_gitignore ? '✓' : '✗'} .gitignore</span>`;
+            document.getElementById('infoConfigs').innerHTML = cfg;
+
+            const envs = a.env_vars_needed || [];
+            document.getElementById('infoEnvVars').innerHTML = envs.length > 0
+                ? envs.map(v => `<span class="tag warn">${v}</span>`).join('')
+                : '<span class="tag ok">無需額外設定</span>';
+        }
+
+        function showFileTree(files) {
+            const tree = document.getElementById('fileTree');
+            if (!files.length) { tree.innerHTML = '<div class="tree-item" style="color: var(--text-muted);">沒有檔案</div>'; return; }
+
+            const root = {};
+            files.forEach(f => {
+                const parts = f.split(/[/\\]/);
+                let cur = root;
+                parts.forEach((p, i) => {
+                    if (!cur[p]) cur[p] = i === parts.length - 1 ? null : {};
+                    if (cur[p] !== null) cur = cur[p];
+                });
+            });
+
+            function render(obj, indent = 0) {
+                let html = '';
+                const entries = Object.entries(obj).sort((a, b) => {
+                    const aF = a[1] !== null, bF = b[1] !== null;
+                    if (aF !== bF) return bF - aF;
+                    return a[0].localeCompare(b[0]);
+                });
+
+                for (const [name, children] of entries) {
+                    const isFolder = children !== null;
+                    const icon = isFolder ? '📁' : getIcon(name);
+                    const ind = indent > 0 ? ' indent-' + Math.min(indent, 3) : '';
+                    const click = isFolder ? '' : ` onclick="openFile('${name}')"`;
+                    html += `<div class="tree-item${ind}"${click}><span class="icon">${icon}</span>${name}</div>`;
+                    if (isFolder) html += render(children, indent + 1);
+                }
+                return html;
+            }
+
+            tree.innerHTML = render(root);
+        }
+
+        function getIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            const icons = {
+                html: '🌐', css: '🎨', js: '📜', ts: '💎', py: '🐍',
+                json: '📋', md: '📝', toml: '⚙️', yml: '⚙️', env: '🔐'
+            };
+            return icons[ext] || '📄';
+        }
+
+        // === 檔案開啟 ===
+        async function openFile(name) {
+            if (!analysis) return;
+            termLog('$ 開啟: ' + name, 'cmd');
+
+            try {
+                const res = await fetch('/api/read-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: analysis.path, filename: name })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentFile = name;
+                    document.getElementById('welcomePage').style.display = 'none';
+                    document.getElementById('editorContent').classList.add('active');
+
+                    const lines = data.content.split('\n');
+                    document.getElementById('lineNumbers').innerHTML = lines.map((_, i) => i + 1).join('<br>');
+                    document.getElementById('codeContent').textContent = data.content;
+
+                    // Tab
+                    let tab = document.querySelector(`[data-tab="${name}"]`);
+                    if (!tab) {
+                        tab = document.createElement('div');
+                        tab.className = 'tab';
+                        tab.dataset.tab = name;
+                        tab.innerHTML = `${getIcon(name)} ${name} <span class="tab-close" onclick="closeTab('${name}',event)">×</span>`;
+                        tab.onclick = () => openFile(name);
+                        document.getElementById('tabsBar').appendChild(tab);
+                    }
+                    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+                } else {
+                    termLog('無法開啟: ' + data.error, 'err');
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+        }
+
+        function closeTab(name, e) {
+            e.stopPropagation();
+            const tab = document.querySelector(`[data-tab="${name}"]`);
+            if (tab) tab.remove();
+            if (currentFile === name) showWelcome();
+        }
+
+        function showWelcome() {
+            document.getElementById('welcomePage').style.display = 'flex';
+            document.getElementById('editorContent').classList.remove('active');
+            currentFile = null;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'welcome'));
+        }
+
+        // === 配置生成 ===
+        async function generateConfigs() {
+            if (!analysis) { termLog('請先分析專案', 'err'); return; }
+            termLog('$ 生成配置檔...', 'cmd');
+            setStatus('生成中...');
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: analysis.path,
+                        config: {
+                            netlify_toml: true,
+                            gitignore: true,
+                            env_example: true,
+                            requirements: analysis.has_python,
+                            publish_dir: '.',
+                            functions_dir: analysis.functions_dir || (analysis.has_python ? 'netlify/functions' : null),
+                            env_vars: analysis.env_vars_needed || []
+                        }
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    termLog('配置檔生成完成！', 'ok');
+                    data.results.forEach(r => termLog('  ✓ ' + r.file, 'ok'));
+                    analyzeProject();
+                } else {
+                    termLog('失敗: ' + data.error, 'err');
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        // === 修改域名 ===
+        async function updateDomain() {
+            if (!analysis) { termLog('請先分析專案', 'err'); return; }
+
+            const newName = prompt('請輸入新的站點名稱：\n\n例如輸入 my-cool-site\n將會變成 my-cool-site.netlify.app\n\n注意：名稱只能包含小寫字母、數字和連字號(-)');
+
+            if (!newName) return;
+
+            termLog('$ netlify sites:update --name ' + newName, 'cmd');
+            termLog('更新域名中...', 'muted');
+            setStatus('更新中...');
+
+            try {
+                const res = await fetch('/api/update-domain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: analysis.path,
+                        new_name: newName
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    termLog('域名更新成功！', 'ok');
+                    termLog('新網址: https://' + newName + '.netlify.app', 'ok');
+                    addChat('ai', `🎉 域名已更新！\n\n新網址：https://${newName}.netlify.app`);
+                } else {
+                    termLog('更新失敗: ' + (data.error || ''), 'err');
+                    if (data.stderr) {
+                        data.stderr.split('\n').forEach(l => l.trim() && termLog(l, 'err'));
+                    }
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        // === 初始化站點 ===
+        async function initSite() {
+            if (!analysis) { termLog('請先分析專案', 'err'); return; }
+
+            const siteName = prompt('請輸入站點名稱（留空則自動生成）：\n\n例如：my-awesome-site\n將會建立 my-awesome-site.netlify.app');
+
+            termLog('$ netlify sites:create', 'cmd');
+            termLog('初始化站點中...', 'muted');
+            setStatus('初始化中...');
+
+            try {
+                const res = await fetch('/api/init-site', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: analysis.path,
+                        site_name: siteName || ''
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    termLog('站點初始化成功！', 'ok');
+                    if (data.stdout) {
+                        data.stdout.split('\n').forEach(l => l.trim() && termLog(l));
+                    }
+                    addChat('ai', '🎉 站點初始化成功！現在可以部署了。');
+                } else {
+                    termLog('初始化失敗: ' + (data.error || '未知錯誤'), 'err');
+                    if (data.stderr) {
+                        data.stderr.split('\n').forEach(l => l.trim() && termLog(l, 'err'));
+                    }
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        // === 部署 ===
+        async function deployPreview() { await deploy('preview'); }
+        async function deployProd() {
+            if (!confirm('確定正式部署？')) return;
+            await deploy('production');
+        }
+
+        async function deploy(type) {
+            if (!analysis) { termLog('請先分析專案', 'err'); return; }
+            const label = type === 'preview' ? '預覽' : '正式';
+            termLog(`$ netlify deploy ${type === 'production' ? '--prod' : ''}`, 'cmd');
+            termLog(`${label}部署中...`, 'muted');
+            setStatus(`${label}部署中...`);
+
+            try {
+                const res = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: analysis.path, type })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    termLog(`${label}部署成功！`, 'ok');
+                    if (data.url) {
+                        termLog('URL: ' + data.url, 'ok');
+                        addChat('ai', `🎉 部署成功！\n\n${data.url}`);
+                    }
+                } else {
+                    if (data.needs_init) {
+                        termLog('尚未連結 Netlify 站點', 'warn');
+                        termLog('請先點擊「🔗 初始化站點」按鈕', 'warn');
+                        addChat('ai', '⚠️ 這個專案還沒連結到 Netlify 站點。\n\n請先點擊右側「📊 資訊」面板中的「🔗 初始化站點」按鈕來創建並連結站點。');
+                    } else {
+                        termLog('部署失敗: ' + (data.error || ''), 'err');
+                        if (data.stderr) {
+                            data.stderr.split('\n').forEach(l => l.trim() && termLog(l, 'err'));
+                            if (apiKey) analyzeError(data.stderr);
+                        }
+                    }
+                }
+            } catch (e) {
+                termLog('錯誤: ' + e.message, 'err');
+            }
+            setStatus('就緒');
+        }
+
+        // === CLI 狀態 ===
+        async function checkCli() {
+            try {
+                const res = await fetch('/api/check-cli');
+                const data = await res.json();
+                document.getElementById('statusCli').className = 'status-dot ' + (data.cli_installed ? 'green' : 'red');
+                document.getElementById('statusLogin').className = 'status-dot ' + (data.logged_in ? 'green' : 'yellow');
+            } catch {
+                document.getElementById('statusCli').className = 'status-dot red';
+                document.getElementById('statusLogin').className = 'status-dot red';
+            }
+        }
+
+        // === AI 聊天 ===
+        function handleChatKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            if (!apiKey) { addChat('ai', '請先在「設定」輸入 API Key'); return; }
+
+            addChat('user', msg);
+            input.value = '';
+            document.getElementById('chatSend').disabled = true;
+            addChat('ai', '思考中...');
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: msg,
+                        provider,
+                        api_key: apiKey,
+                        context: analysis ? JSON.stringify(analysis) : null
+                    })
+                });
+                const data = await res.json();
+
+                const msgs = document.getElementById('chatMessages');
+                msgs.removeChild(msgs.lastChild);
+
+                addChat('ai', data.success ? data.response : '錯誤: ' + data.error);
+            } catch (e) {
+                const msgs = document.getElementById('chatMessages');
+                msgs.removeChild(msgs.lastChild);
+                addChat('ai', '連線錯誤: ' + e.message);
+            }
+            document.getElementById('chatSend').disabled = false;
+        }
+
+        function addChat(type, content) {
+            const msgs = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-message ' + type;
+            div.innerHTML = `<div class="msg-content">${content.replace(/\n/g, '<br>')}</div>`;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        async function analyzeError(log) {
+            if (!apiKey) return;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: '分析這個部署錯誤：\n' + log,
+                        provider,
+                        api_key: apiKey,
+                        context: analysis ? JSON.stringify(analysis) : null
+                    })
+                });
+                const data = await res.json();
+                if (data.success) addChat('ai', data.response);
+            } catch {}
+        }
+
+        // === API 設定 ===
+        function selectProvider(p) {
+            provider = p;
+            document.querySelectorAll('.api-option').forEach(o => {
+                o.classList.toggle('selected', o.querySelector('input').value === p);
+                o.querySelector('input').checked = o.querySelector('input').value === p;
+            });
+            const saved = localStorage.getItem('apiKey_' + p);
+            document.getElementById('apiKeyInput').value = saved || '';
+            apiKey = saved || '';
+            updateApiStatus();
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            apiKey = key;
+            if (key) localStorage.setItem('apiKey_' + provider, key);
+            updateApiStatus();
+        }
+
+        function updateApiStatus() {
+            const status = document.getElementById('apiStatus');
+            const dot = document.getElementById('statusAi');
+            if (apiKey) {
+                status.className = 'api-status ok';
+                status.textContent = '✓ API Key 已設定';
+                dot.className = 'status-dot green';
+            } else {
+                status.className = 'api-status no';
+                status.textContent = '⚠️ 尚未設定 API Key';
+                dot.className = 'status-dot yellow';
+            }
+        }
+
+        async function testApi() {
+            if (!apiKey) { termLog('請先輸入 API Key', 'err'); return; }
+            termLog('測試 ' + provider.toUpperCase() + ' API...', 'muted');
+
+            try {
+                const res = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, api_key: apiKey })
+                });
+                const data = await res.json();
+                termLog(data.success ? 'API 連線成功！' : '連線失敗: ' + data.error, data.success ? 'ok' : 'err');
+            } catch (e) {
+                termLog('連線錯誤: ' + e.message, 'err');
+            }
+        }
+
+        // === 終端機 ===
+        function termLog(msg, type = '') {
+            const term = document.getElementById('terminalContent');
+            const line = document.createElement('div');
+            line.className = 'term-line ' + type;
+            line.textContent = msg;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function clearTerm() {
+            document.getElementById('terminalContent').innerHTML = '<div class="term-line muted">終端機已清除</div>';
+        }
+
+        function setStatus(msg) {
+            document.getElementById('statusMsg').textContent = msg;
+        }
+
+        // === 彈出視窗 ===
+        function showTutorial() {
+            document.getElementById('tutorialModal').classList.add('show');
+        }
+
+        function closeTutorial(e) {
+            if (!e || e.target === e.currentTarget) {
+                document.getElementById('tutorialModal').classList.remove('show');
+            }
+        }
+
+        function showInstallGuide() {
+            document.getElementById('installModal').classList.add('show');
+        }
+
+        function closeInstallGuide(e) {
+            if (!e || e.target === e.currentTarget) {
+                document.getElementById('installModal').classList.remove('show');
+            }
+        }
+
+        // === 瀏覽資料夾 ===
+        async function browseFolder() {
+            try {
+                const res = await fetch('/api/browse-folder');
+                const data = await res.json();
+                if (data.success && data.path) {
+                    document.getElementById('projectPath').value = data.path;
+                    termLog('已選擇: ' + data.path, 'ok');
+                    analyzeProject();
+                }
+            } catch (e) {
+                // 如果 API 不可用，顯示提示
+                termLog('請直接輸入完整路徑，例如：D:\\Projects\\my-app', 'warn');
+                alert('請在左上角輸入框中輸入完整的專案路徑\n\n例如：\nD:\\Projects\\my-website\nC:\\Users\\你的名字\\Desktop\\my-app');
+            }
+        }
+
+        // === 載入我的站點 ===
+        async function loadMySites() {
+            const list = document.getElementById('sitesList');
+            list.innerHTML = '<p style="color: var(--text-muted); font-size: 12px;">載入中...</p>';
+
+            try {
+                const res = await fetch('/api/list-sites');
+                const data = await res.json();
+
+                if (data.success && data.sites && data.sites.length > 0) {
+                    list.innerHTML = data.sites.map(site => `
+                        <div class="site-card" onclick="window.open('${site.url}', '_blank')">
+                            <div class="site-name">🌐 ${site.name}</div>
+                            <div class="site-url">${site.url}</div>
+                            <div class="site-updated">更新: ${site.updated || '未知'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p style="color: var(--text-muted); font-size: 12px; text-align: center;">還沒有站點，開始部署吧！</p>';
+                }
+            } catch (e) {
+                list.innerHTML = '<p style="color: var(--accent-error); font-size: 12px;">載入失敗</p>';
+            }
+        }
+
+        // === 初始化 ===
+        function init() {
+            const theme = localStorage.getItem('theme') || 'default';
+            setTheme(theme);
+
+            const savedProvider = localStorage.getItem('provider') || 'openai';
+            selectProvider(savedProvider);
+
+            checkCli();
+            loadMySites(); // 自動載入站點列表
+        }
+
+        // ESC 關閉彈出視窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeTutorial();
+                closeInstallGuide();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
