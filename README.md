@@ -154,8 +154,8 @@
 # ║  Step 1️⃣  下載專案                                         ║
 # ╚════════════════════════════════════════════════════════════╝
 
-git clone https://github.com/ChatGPT3a01/netlify-ai-deploy-studio.git
-cd netlify-ai-deploy-studio
+git clone https://github.com/ChatGPT3a01/netlify-cli-ai.git
+cd netlify-cli-ai
 
 # ╔════════════════════════════════════════════════════════════╗
 # ║  Step 2️⃣  安裝 Python 依賴                                 ║
@@ -432,7 +432,7 @@ python netlify_ai.py
 ## 📁 專案結構
 
 ```
-netlify-ai-deploy-studio/
+netlify-cli-ai/
 │
 ├── 📄 app.py              # GUI 版本主程式 (Flask)
 ├── 📄 netlify_ai.py       # CLI 版本主程式
